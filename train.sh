@@ -1,0 +1,1 @@
+sudo /home/htic/anaconda2/envs/torch4/bin/python -W ignore models/unetGAN/train_unetGAN.py --exp-dir /media/htic/NewVolume5/miccai_mri/models_2x/globaldisc_dagan/  --batch-size 24 --data-parallel
