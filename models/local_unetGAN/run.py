@@ -62,7 +62,7 @@ def main(args):
 
 
 def create_arg_parser():
-    parser = Args()
+    parser = argparse.ArgumentParser()
     parser.add_argument('--val-path', type=string, required=True, help='Path to validation data')
     parser.add_argument('--acceleration', type=int, choices=[2, 4, 8], default=4, help='Acceleration factor for undersampled data')
     parser.add_argument('--checkpoint', type=pathlib.Path, required=True,

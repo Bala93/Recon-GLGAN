@@ -1,3 +1,4 @@
+#unetGAN
 import logging
 import pathlib
 import random
@@ -7,7 +8,6 @@ import functools
 import numpy as np
 import torch
 import torchvision
-import pytorch_ssim
 from torch import nn, optim
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -15,6 +15,7 @@ from tensorboardX import SummaryWriter
 from data.mri_data import SliceData, SliceDataDev
 from models.unetGAN.model import UNet, Discriminator
 from tqdm import tqdm
+import argparse
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,7 +30,6 @@ def create_datasets(args):
 def create_data_loaders(args):
     dev_data, train_data = create_datasets(args)
     display_data = [dev_data[i] for i in range(0, len(dev_data), len(dev_data) // 16)]
-
     train_loader = DataLoader(
         dataset=train_data,
         batch_size=args.batch_size,
@@ -117,6 +117,7 @@ def train_epoch(args, epoch, model, netD, data_loader, optimizer, optimizerD, wr
         writer.add_scalar('Advloss', lossG_gan.item(), global_step + iter)
         writer.add_scalar('loss_D_real', loss_D_real.item(), global_step + iter)
         writer.add_scalar('loss_D_fake', loss_D_fake.item(), global_step + iter)
+        break
         
     return lossG.item(), lossD.item(),  time.perf_counter() - start_epoch
 
@@ -124,9 +125,8 @@ def train_epoch(args, epoch, model, netD, data_loader, optimizer, optimizerD, wr
 def evaluate(args, epoch, model, data_loader, writer):
     model.eval()
     losses_mse = []
-    losses_ssim = []
+
     start = time.perf_counter()
-    ssim_loss = pytorch_ssim.SSIM()
     with torch.no_grad():
         for iter, data in enumerate(tqdm(data_loader)):
             input, target, coords, fm, slice= data
@@ -137,15 +137,11 @@ def evaluate(args, epoch, model, data_loader, writer):
             target = target.float()
             output = model(input)
             loss = F.mse_loss(output, target.float(), size_average=True)
-            
-            ssim_out = ssim_loss(target, output)  
             losses_mse.append(loss)
-            losses_ssim.append(ssim_out)
-
+            break
         writer.add_scalar('Dev_Loss_mse', np.mean(losses_mse), epoch)
-        writer.add_scalar('Dev_Loss_ssim', np.mean(losses_ssim), epoch)
        
-    return np.mean(losses_mse), np.mean(losses_ssim), time.perf_counter() - start
+    return np.mean(losses_mse), time.perf_counter() - start
 
 
 
@@ -169,7 +165,8 @@ def visualize(args, epoch, model, data_loader, writer):
             save_image(torch.abs(target.float() - output.float()), 'Error')
             break
 
-def save_model(args, exp_dir, epoch, model, optimizer, disc, optimizerD, dev_mse, dev_ssim, best_dev_mse, best_dev_ssim, is_new_best_mse, is_new_best_ssim):
+def save_model(args, exp_dir, epoch, model, optimizer, disc, optimizerD, dev_mse, best_dev_mse, is_new_best_mse):
+
     out = torch.save(
         {
             'epoch': epoch,
@@ -179,21 +176,15 @@ def save_model(args, exp_dir, epoch, model, optimizer, disc, optimizerD, dev_mse
             'disc': disc.state_dict(),
             'optimizerD': optimizerD.state_dict(),
             'best_dev_mse': best_dev_mse,
-            'best_dev_ssim': best_dev_ssim,
-            'dev_mse': dev_mse,
-            'dev_ssim': dev_ssim,            
+            'dev_mse': dev_mse,         
         },
+
         f=exp_dir / 'model.pt'
     )
 
-    if is_new_best_mse and is_new_best_ssim:
-        shutil.copyfile(exp_dir / 'model.pt', exp_dir / 'best_mse_ssim_model.pt')
+    if is_new_best_mse:
+    	shutil.copyfile(exp_dir / 'model.pt', exp_dir / 'best_model.pt')
 
-    elif is_new_best_mse:
-    	shutil.copyfile(exp_dir / 'model.pt', exp_dir / 'best_mse_model.pt')
-
-    elif is_new_best_ssim:
-    	shutil.copyfile(exp_dir / 'model.pt', exp_dir / 'best_ssim_model.pt')
 
 
 
@@ -243,9 +234,9 @@ def main(args):
         checkpoint, model, optimizer, disc, optimizerD = load_model(args.checkpoint)
         args = checkpoint['args']
         best_dev_mse= checkpoint['best_dev_mse']
-        best_dev_ssim = checkpoint['best_dev_mse']
         start_epoch = checkpoint['epoch']
         del checkpoint
+
     else:
         model = build_generator(args)
         disc, optimizerD = build_disc()
@@ -254,45 +245,36 @@ def main(args):
             disc = torch.nn.DataParallel(disc)
         optimizer = build_optim(args, model.parameters())
         best_dev_mse = 1e9
-        best_dev_ssim = -4e9
         start_epoch = 0
-
-    #logging.info(args)
-    #logging.info(model)
 
     train_loader, dev_loader, display_loader = create_data_loaders(args)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, args.lr_step_size, args.lr_gamma)
 
     for epoch in range(start_epoch, args.num_epochs):
         is_new_best_mse = False
-        is_new_best_ssim = False
         scheduler.step(epoch)
         train_lossG, train_lossD, train_time = train_epoch(args, epoch, model, disc, train_loader, optimizer, optimizerD, writer)
-        dev_mse, dev_ssim, dev_time = evaluate(args, epoch, model, dev_loader, writer)
+        dev_mse, dev_time = evaluate(args, epoch, model, dev_loader, writer)
 
         if dev_mse < best_dev_mse:
             is_new_best_mse = True
             best_dev_mse =  dev_mse
 
-        if dev_ssim > best_dev_ssim:
-            is_new_best_ssim = True
-            best_dev_ssim = dev_ssim
-
         visualize(args, epoch, model, display_loader, writer)
-        save_model(args, args.exp_dir, epoch, model, optimizer, disc, optimizerD, dev_mse, dev_ssim, best_dev_mse, best_dev_ssim, is_new_best_mse, is_new_best_ssim)
+        save_model(args, args.exp_dir, epoch, model, optimizer, disc, optimizerD, dev_mse, best_dev_mse, is_new_best_mse)
         logging.info(
             f'Epoch = [{epoch:4d}/{args.num_epochs:4d}] TrainLossG = {train_lossG:.4g} TrainLossD = {train_lossD:.4g} '
-            f'DevMSE = {dev_mse:.4g} DevSSIM = {dev_ssim:.4g} TrainTime = {train_time:.4f}s DevTime = {dev_time:.4f}s',
+            f'DevMSE = {dev_mse:.4g} TrainTime = {train_time:.4f}s DevTime = {dev_time:.4f}s',
         )
     writer.close()
 
 
 def create_arg_parser():
-    parser = Args()
-    parser.add_argument('--train-path', type=string, required=True, help='Path to training data')
-    parser.add_argument('--val-path', type=string, required=True, help='Path to validation data')
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--train-path', type=str, required=True, help='Path to training data')
+    parser.add_argument('--val-path', type=str, required=True, help='Path to validation data')
     parser.add_argument('--acceleration', type=int, choices=[2, 4, 8], default=4, help='Acceleration factor for undersampled data')
-    parser.add_argument('--val-path', type=string, help='Path to validation data')   
     parser.add_argument('--batch-size', default=2, type=int,  help='Mini batch size')
     parser.add_argument('--num-epochs', type=int, default=150, help='Number of training epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning rate')

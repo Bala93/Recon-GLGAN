@@ -71,6 +71,8 @@ def evaluate(args):
     metrics_global = Metrics(METRIC_FUNCS)
     metrics_local = Metrics(METRIC_FUNCS)
 
+    roi = args.roi_size
+
     for tgt_file in args.target_path.iterdir():
         with h5py.File(tgt_file) as target, h5py.File(
           args.predictions_path / tgt_file.name) as recons:
@@ -84,12 +86,12 @@ def evaluate(args):
 
 
             for i in range(len(target2)):
-                gt_patch.append(target2[i,int(center_coord[1])-30:int(center_coord[1])+30, int(center_coord[0])-30:int(center_coord[0])+30])
+                gt_patch.append(target2[i,int(center_coord[1])-roi:int(center_coord[1])+roi, int(center_coord[0])-roi:int(center_coord[0])+roi])
 
             recons = recons['reconstruction'].value
             recons = recons[:, 5:155, 5:155]
             for i in range(len(target2)):
-                recons_patch.append(recons[i,int(center_coord[1])-30:int(center_coord[1])+30, int(center_coord[0])-30:int(center_coord[0])+30])
+                recons_patch.append(recons[i,int(center_coord[1])-roi:int(center_coord[1])+roi, int(center_coord[0])-roi:int(center_coord[0])+roi])
                 
             metrics_global.push(target2, recons)
             metrics_local.push(np.asarray(gt_patch) , np.asarray(recons_patch))
@@ -103,9 +105,8 @@ if __name__ == '__main__':
                         help='Path to the ground truth data')
     parser.add_argument('--predictions-path', type=pathlib.Path, required=True,
                         help='Path to reconstructions')
-    parser.add_argument('--acceleration', choices=[4, 8], default=None,
-                        help='If set, only volumes of the specified acceleration rate are used '
-                             'for evaluation. By default, all volumes are included.')
+    parser.add_argument('--acceleration', type=int, choices=[2, 4, 8], default=4, help='Acceleration factor for undersampled data')
+    parser.add_argument('--roi-size', type=int, default=roi, help='Dimensions of the square ROI')  
     args = parser.parse_args()
 
     metrics_local, metrics_global = evaluate(args)

@@ -185,7 +185,7 @@ class LDiscriminator(nn.Module):
         return x
 
     def num_of_flat_features(self,x):
-        size=x.size()[1:] dimension
+        size=x.size()[1:] 
         num_features=1
         for s in size:
             num_features*=s

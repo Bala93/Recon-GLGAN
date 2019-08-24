@@ -1,1 +1,2 @@
-sudo /home/htic/anaconda2/envs/torch4/bin/python -W ignore models/unetGAN/train_unetGAN.py --exp-dir /media/htic/NewVolume5/miccai_mri/models_2x/globaldisc_dagan/  --batch-size 24 --data-parallel
+#sudo /home/htic/anaconda2/envs/torch4/bin/python -W ignore models/unetGAN/train.py --train-path /media/htic/NewVolume3/Balamurali/mri_recon_local/training/ --val-path /media/htic/NewVolume3/Balamurali/mri_recon_local/validation/ --exp-dir /media/htic/NewVolume5/miccai_mri/models_2x/globaldisc_dagan/  --batch-size 24 --data-parallel
+python -W ignore models/local_unetGAN/train.py --train-path /media/htic/NewVolume3/Balamurali/mri_recon_local/training/ --val-path /media/htic/NewVolume2/global_coord_norm/ --exp-dir /media/htic/NewVolume2/dummy  --batch-size 2 --data-parallel

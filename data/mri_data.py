@@ -13,6 +13,7 @@ class SliceData(Dataset):
 
         files = list(pathlib.Path(root).iterdir())
         self.examples = []
+        self.acceleration = acceleration
         for fname in sorted(files):
             try:
                 cur_file = h5py.File(fname, 'r')
@@ -31,7 +32,7 @@ class SliceData(Dataset):
         fname, slice = self.examples[i]
         try:
             with h5py.File(fname, 'r') as data:
-                input = np.pad(data['volus_{}x'.format(acceleration)][:,:,slice], (5,5), 'constant', constant_values=(0,0))
+                input = np.pad(data['volus_{}x'.format(self.acceleration)][:,:,slice], (5,5), 'constant', constant_values=(0,0))
                 target = np.pad(data['volfs'][:,:,slice], (5,5), 'constant', constant_values=(0,0))
                 coords = data['center_coord'][slice]
                 
@@ -45,6 +46,7 @@ class SliceDataDev(Dataset):
     def __init__(self, root, acceleration):
         files = list(pathlib.Path(root).iterdir())
         #print(len(files))
+        self.acceleration = acceleration
         self.examples = []
         for fname in sorted(files):
             try:
@@ -63,7 +65,7 @@ class SliceDataDev(Dataset):
         fname, slice = self.examples[i]
         try:
             with h5py.File(fname, 'r') as data:
-                input = np.pad(data['volus_{}x'.format(acceleration)][:,:,slice], (5,5), 'constant', constant_values=(0,0))
+                input = np.pad(data['volus_{}x'.format(self.acceleration)][:,:,slice], (5,5), 'constant', constant_values=(0,0))
                 target = np.pad(data['volfs'][:,:,slice], (5,5), 'constant', constant_values=(0,0))
                 coords = data['center_coord'].value
 
