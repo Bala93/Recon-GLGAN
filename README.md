@@ -1,6 +1,6 @@
 # ReconGLGAN - GAN for MRI Reconstruction
 
-## ReconGLGAN procedure:
+## ReconGLGAN illustration:
 ![](figures/Recon_ROI_illustration.jpg)
 ## ReconGLGAN architecture:
 ![](figures/ROI_GAN.jpg)
@@ -36,11 +36,22 @@ This code is based on the [fastMRI code](https://github.com/facebookresearch/fas
 
 TBA
 
-## Training 
+## GAN Training 
+```TRAIN_PATH=''
+VALIDATION_PATH=''
+EXP_DIR='' # folder to save models and write summary
+ACCELERATION=''
+python models/gan/train.py --train-path ${TRAIN_PATH} --val-path ${VALIDATION_PATH} --exp-dir ${EXP_DIR} --acceleration ${ACCELERATION}
+```
+## Recon-GLGAN Training 
+```TRAIN_PATH=''
+VALIDATION_PATH=''
+EXP_DIR='' # folder to save models and write summary
+ACCELERATION=''
+python models/recon_glgan/train.py --train-path ${TRAIN_PATH} --val-path ${VALIDATION_PATH} --exp-dir ${EXP_DIR} --acceleration ${ACCELERATION}
+```
 
-Set the appropriate paths to training and test data in ```train.sh```. Then,
 
-```sh train.sh```
 
 
 ## Validation
