@@ -1,1 +1,0 @@
-python -W ignore models/unetGAN/run.py --checkpoint . --out-dir .
