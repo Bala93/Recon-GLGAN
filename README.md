@@ -1,4 +1,4 @@
-# ReconGLGAN - GANs for MRI Reconstruction
+# ReconGLGAN - GAN for MRI Reconstruction
 
 ## ReconGLGAN procedure:
 ![](figures/Recon_ROI_illustration.jpg)
@@ -10,7 +10,7 @@ From Left to Right: Ground Truth FS image, ZF image, GAN reconstructed
 image, Recon-GLGAN reconstructed image, ZF reconstruction error, GAN reconstruction
 error and Recon-GLGAN reconstruction error. From Top to Bottom: Images corresponding
 to different acceleration factors: 2x, 4x and 8x.
-![](figures/qualitative_comparison.jpg)
+![](figures/recon_qualitative_comparison.jpg)
 
 ## Reconstruction quantitative comparison:
 Comparison of Recon-GLGAN with baseline architectures for 2x, 4x and 8x
