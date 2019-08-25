@@ -32,35 +32,53 @@ This code is based on the [fastMRI code](https://github.com/facebookresearch/fas
 
 
 
-## Dataset
+## Dataset creation
 
-TBA
+Each h5 file denotes a volume, the h5 file contains fully sampled and 2x,4x,8x under sampled images
 
-## GAN Training 
-```TRAIN_PATH=''
+Note: We will upload the code for data creation. The dataset can be created according to the need and data/mri_data.py can be changed accordingly. In our case, the keys are volfs,volus_2x,volus_4x and volus_8x. The coordinate to crop the ROI is also stored in h5 using center_coord key. 
+
+## Training 
+### GAN 
+```
+TRAIN_PATH=''
 VALIDATION_PATH=''
 EXP_DIR='' # folder to save models and write summary
 ACCELERATION=''
 python models/gan/train.py --train-path ${TRAIN_PATH} --val-path ${VALIDATION_PATH} --exp-dir ${EXP_DIR} --acceleration ${ACCELERATION}
 ```
-## Recon-GLGAN Training 
-```TRAIN_PATH=''
+### Recon-GLGAN
+```
+TRAIN_PATH=''
 VALIDATION_PATH=''
 EXP_DIR='' # folder to save models and write summary
 ACCELERATION=''
 python models/recon_glgan/train.py --train-path ${TRAIN_PATH} --val-path ${VALIDATION_PATH} --exp-dir ${EXP_DIR} --acceleration ${ACCELERATION}
 ```
 
-
-
-
 ## Validation
-
-Set the appropriate path to the model checkpoint in ```valid.sh```. Then,
-
-```sh train.sh```.
-
+### GAN
+```
+VAL_PATH='' #validation path 
+ACCELERATION='' #acceleration factor
+CHECKPOINT='' #best_model.
+OUT_DIR='' # Path to save reconstruction files 
+python models/gan/run.py --checkpoint ${CHECKPOINT} --out-dir ${OUT_DIR}
+```
+### Recon-GLGAN
+```
+VAL_PATH='' #validation path 
+ACCELERATION='' #acceleration factor
+CHECKPOINT='' #best_model.
+OUT_DIR='' # Path to save reconstruction files 
+python models/recon_glgan/run.py --checkpoint ${CHECKPOINT} --out-dir ${OUT_DIR}
+```
 
 ## Evaluation
-
-```python common/patch_eval_onecoord.py --target-path [PATH_TO_TARGET_DATA] --predictions-path [PATH_TO_PREDICTED_OUTPUTS] --acceleration [] --roi-size [SIZE_OF_ROI]```
+The evaluation code will return the average metrics for the entire image and the ROI. 
+```
+TARGET_PATH=''
+PREDICTIONS_PATH=''
+ROI_SIZE=''
+python common/evaluate.py --target-path ${TARGET_PATH} --predictions-path ${PREDICTIONS_PATH} --roi-size ${ROI_SIZE}
+```
