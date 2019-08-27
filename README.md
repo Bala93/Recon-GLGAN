@@ -1,4 +1,4 @@
-# Recon-GLGAN: A Global-Local context based Generative Adversarial Network for MRI Reconstruction(Accepted at Machine Learning in Medical Image Reconstruction(MLMI), MICCAI Workshop)
+## [Recon-GLGAN: A Global-Local context based Generative Adversarial Network for MRI Reconstruction(Accepted at Machine Learning in Medical Image Reconstruction(MLMI), MICCAI Workshop)](https://arxiv.org/abs/1908.09262)
 
 ## ReconGLGAN illustration:
 ![](figures/Recon_ROI_illustration.jpg)
